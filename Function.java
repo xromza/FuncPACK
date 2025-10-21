@@ -1,12 +1,13 @@
-
 import java.util.EmptyStackException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Stack;
+import java.util.Set;
 
 public abstract class Function {
 
     protected ArrayList<String> function = new ArrayList<>();
-
+    protected Set<String> varNameList = new HashSet<>();
     public Function(String s) {
         try {
             functionParser(s);
@@ -38,8 +39,11 @@ public abstract class Function {
 
                 function.add(buffer);
                 buffer = "";
-            } else if (isVar(s.charAt(i))) {
-                if (!function.isEmpty() && (isNumber(function.getLast()) || s.charAt(i-1) == ')')) {
+            } else if (isVar(c)) {
+                if (!varNameList.contains(""+c)) {
+                    varNameList.add(""+c);
+                }
+                if (!function.isEmpty() && (isNumber(function.getLast()) || s.charAt(i-1) == ')' || isVar(function.getLast()))) {
                     function.add("*");
                 }
                 buffer += c;
@@ -73,9 +77,8 @@ public abstract class Function {
     }
     @Override
     public String toString() {
-        return "f(x) = " + function.toString();
+        return "f(x) = " + function.toString() +"\nСписок переменных: " + varNameList.toString();
     }
-
     public void setFunction(String s) {
         try {
             functionParser(s);
@@ -113,6 +116,7 @@ public abstract class Function {
         }
         return stack.isEmpty();
     }
+
     private boolean isNumber(String s) {
             try {
                 Double.parseDouble(s);
@@ -140,4 +144,9 @@ public abstract class Function {
     private boolean isVar(char c) {
         return c >= 'a' && c <= 'z';
     }
+
+    public Set<String> getVarNameList() {
+        return varNameList;
+    }
+
 }
