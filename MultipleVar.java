@@ -1,15 +1,15 @@
 import java.util.Map;
 import java.util.Set;
 
-public class SingleVar extends Function {
+public class MultipleVar extends Function {
     // function = ArrayList<String> 
-    public SingleVar(String s) {
+    public MultipleVar(String s) {
         super(s);
     }
-    public double evaluate(double arg) {
+    public double evaluate(Map<String, Double> args) {
         try {
             Evaluation evaluator = new Evaluation();
-            return evaluator.evaluate(arg);
+            return evaluator.evaluate(args);
         } catch (EvaluateError e) {
             System.out.println(e.getMessage());
             System.exit(1);
@@ -19,21 +19,26 @@ public class SingleVar extends Function {
 
     private class Evaluation {
         int pos = 0;
-        public double evaluate(double arg) throws EvaluateError {
-            double result = parseExpression(arg);
+        public double evaluate(Map<String, Double> args) throws EvaluateError {
+            if (!args.keySet().containsAll(varNameList)) {
+                Set<String> temp = varNameList;
+                temp.removeAll(args.keySet());
+                throw new EvaluateError("Недостаточно аргументов" + temp.toString() + ". Ожидалось: " + varNameList.toString() + ". Получено: " + args.keySet().toString());
+            }
+            double result = parseExpression(args);
             
             if (pos != function.size()) {
                 throw new EvaluateError("Лишние токены");
             }
             return result;
         }
-        private double parseExpression(double arg) {
-            double left = parseTerm(arg);
+        private double parseExpression(Map<String, Double> args) {
+            double left = parseTerm(args);
             while (pos < function.size()) {
                 String op = function.get(pos);
                 if ("+".equals(op) || "-".equals(op)) {
                     pos++;
-                    double right = parseTerm(arg);
+                    double right = parseTerm(args);
                     if ("+".equals(op)) left += right;
                     else left -= right;
                 } else {
@@ -42,13 +47,13 @@ public class SingleVar extends Function {
             }
             return left;
         }
-        private double parseTerm(double arg) {
-            double left = parseFactor(arg);
+        private double parseTerm(Map<String, Double> args) {
+            double left = parseFactor(args);
             while (pos < function.size()) {
                 String op = function.get(pos);
                 if ("*".equals(op) || "/".equals(op)) {
                     pos++;
-                    double right = parseFactor(arg);
+                    double right = parseFactor(args);
                     if ("*".equals(op)) {
                         left *= right;
                     }
@@ -60,31 +65,31 @@ public class SingleVar extends Function {
             }
             return left;
         }
-        private double parseFactor(double arg) {
-            double left = parsePower(arg);
+        private double parseFactor(Map<String, Double> args) {
+            double left = parsePower(args);
             if (pos < function.size() && "^".equals(function.get(pos))) {
                 pos++;
-                double right = parseFactor(arg);
+                double right = parseFactor(args);
                 return Math.pow(left,right);
             }
             return left;
         }
-        private double parsePower(double arg) {
+        private double parsePower(Map<String, Double> args) {
             try {
-                return parsePrimary(arg);
+                return parsePrimary(args);
             } catch (EvaluateError e) {
                 System.out.println(e.getMessage());
                 System.exit(1);
             }
             return 1;
         }
-        private double parsePrimary(double arg) throws EvaluateError {
+        private double parsePrimary(Map<String, Double> args) throws EvaluateError {
             if (pos >= function.size()) {
                 throw new EvaluateError("Неожиданный конец");
             }
             String token = function.get(pos++);
             if ("(".equals(token)) {
-                double result = parseExpression(arg);
+                double result = parseExpression(args);
                 if (pos >= function.size() || !")".equals(function.get(pos))) {
                     throw new EvaluateError("ожидается \")\"");
                 }
@@ -94,13 +99,12 @@ public class SingleVar extends Function {
             else if (token.matches("-?\\d+(\\.\\d+)?")) {
                 return Double.parseDouble(token);
             }
-            else if ("x".equals(token)) {
-                return arg;
+            else if (args.keySet().contains(token)) {
+                return args.get(token);
             }
             else {
                 throw new EvaluateError("Неизвестный токен");
             }
         }
     }
-
 }

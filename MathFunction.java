@@ -3,5 +3,5 @@ import java.util.Map;
 
 public interface MathFunction {
     Set<String> getVariables();
-    double evaluate(Map<String, Double> values);
+    double evaluate(Map<String, Double> args);
 }

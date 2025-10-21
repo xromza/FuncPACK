@@ -1,0 +1,13 @@
+import java.util.Map;
+
+public class NPoint {
+    private Map<String, Double> coords;
+
+    public NPoint(Map<String,Double> coords) {
+        this.coords = coords;
+    }
+
+    public Map<String, Double> getCoords() {
+        return coords;
+    }
+}

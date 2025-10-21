@@ -8,6 +8,7 @@ public abstract class Function {
 
     protected ArrayList<String> function = new ArrayList<>();
     protected Set<String> varNameList = new HashSet<>();
+    protected double maxDegree = 0;
     public Function(String s) {
         try {
             functionParser(s);
@@ -35,6 +36,9 @@ public abstract class Function {
                     function.add("*");
                 }
                 buffer = s.substring(i, i + j);
+                if (!function.isEmpty() && function.getLast().equals("^")) {
+                    maxDegree = Math.max(maxDegree, Double.parseDouble(buffer));
+                }
                 i += j;
 
                 function.add(buffer);
@@ -43,6 +47,7 @@ public abstract class Function {
                 if (!varNameList.contains(""+c)) {
                     varNameList.add(""+c);
                 }
+                maxDegree = Math.max(maxDegree, 1);
                 if (!function.isEmpty() && (isNumber(function.getLast()) || s.charAt(i-1) == ')' || isVar(function.getLast()))) {
                     function.add("*");
                 }
@@ -78,6 +83,9 @@ public abstract class Function {
     @Override
     public String toString() {
         return "f(x) = " + function.toString() +"\nСписок переменных: " + varNameList.toString();
+    }
+    public String toStringFunc() {
+        return function.toString();        
     }
     public void setFunction(String s) {
         try {
@@ -147,6 +155,10 @@ public abstract class Function {
 
     public Set<String> getVarNameList() {
         return varNameList;
+    }
+
+    public double getMaxDegree() {
+        return maxDegree;
     }
 
 }
