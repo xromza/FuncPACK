@@ -3,16 +3,40 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 
+/**
+ * <h1>Класс "Уравнение"</h1>
+ *  Представляет класс, реализующий модель математического уравнения f(x) = g(x)
+ * <p>
+ * <h3>Аргументы:</h3>
+ * <ol>
+ *  <li> Function f - Задаёт одну функцию, вторая принимается 0 по умолчанию</li>
+ *  <li> Function f, Function g - Задаёт две функции</li>
+ * </ol>
+ * <p>
+ * <h3>Поддерживает:</h3>
+ * <ul>
+ *  <li>Решение уравнения относительно одной переменной (реализован методом дихотомии)</li>
+ * </ul>
+ * Пример использования:
+ * <pre>{@code
+ * Function f = new Function("x+1");
+ * Function g = new Function("x^2-2x");
+ * Equation eq = new Equation(f,g);
+ * double result = eq.solve();
+ * }</pre>
+ *
+ * @author xromza
+ */
 public class Equation {
-    private SingleVar f;
-    private SingleVar g;
-    private final double MIN_INTERVAL = 1e-6;
-    private final double EPS = 1e-9;
-    private final double step = 0.001;
+    private final SingleVar f;
+    private final SingleVar g;
+    private final double MIN_INTERVAL = 1e-9;
+    private final double EPS = 1e-9; 
+    private final double step = 0.01;
 
     public Equation(SingleVar f) {
         this.f = f;
-        g = new SingleVar("0"); // default: g = 0, so equation is f = 0
+        g = new SingleVar("0", "g");
     }
     public Equation(SingleVar f, SingleVar g) {
         this.f = f;
@@ -20,10 +44,10 @@ public class Equation {
     }
     @Override
     public String toString() {
-        return f.toStringFunc() + " = " + g.toStringFunc();
+        return f.getFunctionString() + " = " + g.getFunctionString();
     }
 
-    public Set<Map<String, Double>> solve(double a, double b){
+    public Set<Map<String, Double>> solve(double a, double b) {
         Set<Map<String, Double>> points = new HashSet<>();
         double deltaA = f.evaluate(a) - g.evaluate(a);
         double deltaB = f.evaluate(b) - g.evaluate(b);
@@ -78,9 +102,5 @@ public class Equation {
             }
         }
 
-    }
-
-    private boolean validate() {
-        return f.getVarNameList().containsAll(g.getVarNameList()) && g.getVarNameList().containsAll(f.getVarNameList());
     }
 }

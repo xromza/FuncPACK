@@ -1,164 +1,128 @@
-import java.util.EmptyStackException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Stack;
 import java.util.Set;
+import java.util.Map;
 
-public abstract class Function {
 
-    protected ArrayList<String> function = new ArrayList<>();
-    protected Set<String> varNameList = new HashSet<>();
-    protected double maxDegree = 0;
-    public Function(String s) {
+/**
+ * <h1>Абстрактный класс "Функция"</h1>
+ * <h3>Реализует интерфейс "Математическая функция"</h3>
+ * <p>Представляет собой 
+ * <p>
+ * <h3>Аргументы</h3>
+ * <ul>
+ *  <li> String s - Задаёт функцию из строки</li>
+ * </ul>
+ * <p>
+ * <h3>Поддерживает:</h3>
+ * <ul>
+ *  <li>Решение уравнения относительно одной переменной (реализован методом дихотомии)</li>
+ * </ul>
+ * Пример использования:
+ * <pre>{@code
+ * Function f = new Function("x+1");
+ * Function g = new Function("x^2-2x");
+ * Equation eq = new Equation(f,g);
+ * double result = eq.solve();
+ * }</pre>
+ *
+ * @author xromza
+ */
+public abstract class Function implements MathFunction {
+
+    protected String functionString;
+    protected String name;
+    protected ArrayList<String> functionTokens = new ArrayList<>();
+    protected Set<String> varNameSet = new HashSet<>();
+
+    public Function(Function f) {
+        this.functionString = f.getFunctionString();
+        this.name = f.getName();
+        this.functionTokens = f.getFunctionTokens();
+        this.varNameSet = f.getVarNameSet();
+    }
+
+    public Function(ArrayList<String> functionTokens, Set<String> varNameSet, String name) {
+        this.functionTokens = functionTokens;
+        this.varNameSet = varNameSet;
+        this.functionString = "";
+        this.name = name;
+        for (String s : functionTokens) {
+            this.functionString += s;
+        }
+    }
+
+
+    public Function(String functionString, String name) {
+        this.functionString = functionString;
+        this.name = name;
         try {
-            functionParser(s);
+            FunctionTokenizator.functionTokenizator(functionString, functionTokens, varNameSet);
         } catch (FunctionFormatException e) {
-            System.out.println(e.getMessage());
+            System.err.println(e.getMessage());
             System.exit(1);
         }
     }
 
-    private void functionParser(String s) throws FunctionFormatException {
-        s = s.replaceAll(" ", "");
-        if (!validateBrackets(s)) {
-            throw new FunctionFormatException("неправильная расстановка скобок");
-        }
-        s = s.replace('[', '(').replace(']', ')').replace('{', '(').replace('}', ')');
-        String buffer = "";
-        int i = 0;
-        while (i < s.length()) {
-            char c = s.charAt(i);
-            if (isNumber(c)) {
-                int j = 1;
-                for (; j < s.length() - i && isNumber(s.substring(i, i + j + 1)); j++) {
-                }
-                if (!function.isEmpty() && (isNumber(function.getLast()) || s.charAt(i-1) == ')')) {
-                    function.add("*");
-                }
-                buffer = s.substring(i, i + j);
-                if (!function.isEmpty() && function.getLast().equals("^")) {
-                    maxDegree = Math.max(maxDegree, Double.parseDouble(buffer));
-                }
-                i += j;
-
-                function.add(buffer);
-                buffer = "";
-            } else if (isVar(c)) {
-                if (!varNameList.contains(""+c)) {
-                    varNameList.add(""+c);
-                }
-                maxDegree = Math.max(maxDegree, 1);
-                if (!function.isEmpty() && (isNumber(function.getLast()) || s.charAt(i-1) == ')' || isVar(function.getLast()))) {
-                    function.add("*");
-                }
-                buffer += c;
-                function.add(buffer);
-                buffer = "";
-                i++;
-            } else if (isOperator(c)) {
-                if (c == '^') {
-                    if (!isNumber(function.getLast()) && !isVar(function.getLast()) && s.charAt(i-1) != ')') {
-                        throw new FunctionFormatException("неожиданная \"^\"");
-                    }
-                }
-                buffer += c;
-                function.add(buffer);
-                buffer = "";
-                i++;
-            } else if (isBrackets(c)) {
-                if (c == '(' && !function.isEmpty() && (isNumber(function.getLast()) || function.getLast().equals(")") || isVar(function.getLast()))) {
-                    function.add("*");
-                }
-                buffer += c;
-                function.add(buffer);
-                buffer = "";
-                i++;
-                
-            }
-            else {
-                i++;
-            }
-        }
-    }
     @Override
     public String toString() {
-        return "f(x) = " + function.toString() +"\nСписок переменных: " + varNameList.toString();
+        String s = name+"(";
+        boolean flag = false;
+        for (String temp : varNameSet) {
+            if (!flag) {
+                s += temp;
+                flag = true;
+            } else {
+                s += ", " + temp;
+            }
+        }
+        s +=") = " + this.functionString;
+        return s;
     }
-    public String toStringFunc() {
-        return function.toString();        
+
+    public String toString(Map<String, Double> args, double value) {
+                String s = name+"(";
+        boolean flag = false;
+        for (String temp : varNameSet) {
+            if (!flag) {
+                s += args.get(temp);
+                flag = true;
+            } else {
+                s += ", " + args.get(temp);
+            }
+        }
+        s +=") = " + value;
+        return s;
     }
+
+    @Override
+    public String getFunctionString() {
+        return this.functionString;
+    }
+
+    @Override
+    public Set<String> getVarNameSet() {
+        return varNameSet;
+    }
+
+    public String tokensToString() {
+        return "f(x) = " + functionTokens.toString();
+    }
+
     public void setFunction(String s) {
         try {
-            functionParser(s);
+            FunctionTokenizator.functionTokenizator(s, functionTokens, varNameSet);
         } catch (FunctionFormatException e) {
-            System.out.println(e.getMessage());
+            System.err.println(e.getMessage());
             System.exit(1);
         }
     }
 
-    public static boolean validateBrackets(String s) {
-        Stack<Character> stack = new Stack<>();
-        for (int i = 0; i < s.length(); i++) {
-            try {
-                switch (s.charAt(i)) {
-                    case '(', '[', '{' -> stack.push(s.charAt(i));
-                    case ')' -> {
-                        if (stack.pop() != '(') {
-                            return false;
-                        }
-                    }
-                    case ']' -> {
-                        if (stack.pop() != '[') {
-                            return false;
-                        }
-                    }
-                    case '}' -> {
-                        if (stack.pop() != '{') {
-                            return false;
-                        }
-                    }
-                }
-            } catch (EmptyStackException e) {
-                return false;
-            }
-        }
-        return stack.isEmpty();
+    public String getName() {
+        return name;
     }
 
-    private boolean isNumber(String s) {
-            try {
-                Double.parseDouble(s);
-            } catch (NumberFormatException e) {
-                return false;
-            }
-            return true;
+    public ArrayList<String> getFunctionTokens() {
+        return functionTokens;
     }
-    private boolean isNumber(char c) {
-        String temp = "" + c;
-        return isNumber(temp);
-    }
-    private boolean isOperator(char c) {
-        return c == '+' || c == '-' || c == '*' || c == '/' || c == '^';
-    }
-    private boolean isBrackets(String s) {
-        return isBrackets(s.charAt(0));
-    }
-    private boolean isBrackets(char c) {
-        return c == '(' || c == '[' || c == '{' || c == ')' || c == ']' || c == '}'; 
-    }
-    private boolean isVar(String s) {
-        return isVar(s.charAt(0));
-    }
-    private boolean isVar(char c) {
-        return c >= 'a' && c <= 'z';
-    }
-
-    public Set<String> getVarNameList() {
-        return varNameList;
-    }
-
-    public double getMaxDegree() {
-        return maxDegree;
-    }
-
 }

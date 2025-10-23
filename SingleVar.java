@@ -1,106 +1,36 @@
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
 public class SingleVar extends Function {
-    // function = ArrayList<String> 
-    public SingleVar(String s) {
-        super(s);
+
+    public SingleVar(String s, String name) {
+        super(s, name);
     }
+    public SingleVar(Function f) {
+        super(f);
+        if (f.getVarNameSet().size() > 1) {
+            System.err.println("Преобразование невозможно. Переменных больше, чем 1");
+        }
+    }
+    public SingleVar(ArrayList<String> functionTokens, Set<String> varNameSet, String name) {
+        super(functionTokens, varNameSet, name);
+    }
+    @Override
+    public double evaluate(Map<String, Double> args) {
+        return evaluate(args.get("x"));
+    }
+
+    @Override
     public double evaluate(double arg) {
         try {
-            Evaluation evaluator = new Evaluation();
+            Evaluator evaluator = new Evaluator(functionTokens, varNameSet);
             return evaluator.evaluate(arg);
-        } catch (EvaluateError e) {
-            System.out.println(e.getMessage());
+        } catch (EvaluationException e) {
+            System.err.println(e.getMessage());
             System.exit(1);
         }
         return 1;
-    }
-
-    private class Evaluation {
-        int pos = 0;
-        public double evaluate(double arg) throws EvaluateError {
-            double result = parseExpression(arg);
-            
-            if (pos != function.size()) {
-                throw new EvaluateError("Лишние токены");
-            }
-            return result;
-        }
-        private double parseExpression(double arg) {
-            double left = parseTerm(arg);
-            while (pos < function.size()) {
-                String op = function.get(pos);
-                if ("+".equals(op) || "-".equals(op)) {
-                    pos++;
-                    double right = parseTerm(arg);
-                    if ("+".equals(op)) left += right;
-                    else left -= right;
-                } else {
-                    break;
-                }
-            }
-            return left;
-        }
-        private double parseTerm(double arg) {
-            double left = parseFactor(arg);
-            while (pos < function.size()) {
-                String op = function.get(pos);
-                if ("*".equals(op) || "/".equals(op)) {
-                    pos++;
-                    double right = parseFactor(arg);
-                    if ("*".equals(op)) {
-                        left *= right;
-                    }
-                    else left /= right;
-                }
-                else {
-                    break;
-                }
-            }
-            return left;
-        }
-        private double parseFactor(double arg) {
-            double left = parsePower(arg);
-            if (pos < function.size() && "^".equals(function.get(pos))) {
-                pos++;
-                double right = parseFactor(arg);
-                return Math.pow(left,right);
-            }
-            return left;
-        }
-        private double parsePower(double arg) {
-            try {
-                return parsePrimary(arg);
-            } catch (EvaluateError e) {
-                System.out.println(e.getMessage());
-                System.exit(1);
-            }
-            return 1;
-        }
-        private double parsePrimary(double arg) throws EvaluateError {
-            if (pos >= function.size()) {
-                throw new EvaluateError("Неожиданный конец");
-            }
-            String token = function.get(pos++);
-            if ("(".equals(token)) {
-                double result = parseExpression(arg);
-                if (pos >= function.size() || !")".equals(function.get(pos))) {
-                    throw new EvaluateError("ожидается \")\"");
-                }
-                pos++;
-                return result;
-            }
-            else if (token.matches("-?\\d+(\\.\\d+)?")) {
-                return Double.parseDouble(token);
-            }
-            else if ("x".equals(token)) {
-                return arg;
-            }
-            else {
-                throw new EvaluateError("Неизвестный токен");
-            }
-        }
     }
 
 }
