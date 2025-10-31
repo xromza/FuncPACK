@@ -1,30 +1,15 @@
+package model;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Map;
-
+import exception.*;
+import parsing.*;
 
 /**
- * <h1>Абстрактный класс "Функция"</h1>
- * <h3>Реализует интерфейс "Математическая функция"</h3>
- * <p>Представляет собой 
- * <p>
- * <h3>Аргументы</h3>
- * <ul>
- *  <li> String s - Задаёт функцию из строки</li>
- * </ul>
- * <p>
- * <h3>Поддерживает:</h3>
- * <ul>
- *  <li>Решение уравнения относительно одной переменной (реализован методом дихотомии)</li>
- * </ul>
- * Пример использования:
- * <pre>{@code
- * Function f = new Function("x+1");
- * Function g = new Function("x^2-2x");
- * Equation eq = new Equation(f,g);
- * double result = eq.solve();
- * }</pre>
+ * Math function class Uses a tokenizator to simplify the evaluations and using
+ * within code
  *
  * @author xromza
  */
@@ -42,7 +27,7 @@ public abstract class Function implements MathFunction {
         this.varNameSet = f.getVarNameSet();
     }
 
-    public Function(ArrayList<String> functionTokens, Set<String> varNameSet, String name) {
+    public Function(ArrayList<String> functionTokens, Set<String> varNameSet, String name) throws FunctionFormatException {
         this.functionTokens = functionTokens;
         this.varNameSet = varNameSet;
         this.functionString = "";
@@ -50,23 +35,27 @@ public abstract class Function implements MathFunction {
         for (String s : functionTokens) {
             this.functionString += s;
         }
+        for (String key : varNameSet) {
+            if (key.equals(name)) {
+                throw new FunctionFormatException("Название функции не может совпадать с названиями переменных");
+            }
+        }
     }
 
-
-    public Function(String functionString, String name) {
+    public Function(String functionString, String name) throws FunctionFormatException {
         this.functionString = functionString;
         this.name = name;
-        try {
-            FunctionTokenizator.functionTokenizator(functionString, functionTokens, varNameSet);
-        } catch (FunctionFormatException e) {
-            System.err.println(e.getMessage());
-            System.exit(1);
+        FunctionTokenizator.tokenize(functionString, functionTokens, varNameSet);
+        for (String key : varNameSet) {
+            if (key.equals(name)) {
+                throw new FunctionFormatException("Название функции не может совпадать с названиями переменных");
+            }
         }
     }
 
     @Override
     public String toString() {
-        String s = name+"(";
+        String s = name + "(";
         boolean flag = false;
         for (String temp : varNameSet) {
             if (!flag) {
@@ -76,12 +65,12 @@ public abstract class Function implements MathFunction {
                 s += ", " + temp;
             }
         }
-        s +=") = " + this.functionString;
+        s += ") = " + this.functionString;
         return s;
     }
 
     public String toString(Map<String, Double> args, double value) {
-                String s = name+"(";
+        String s = name + "(";
         boolean flag = false;
         for (String temp : varNameSet) {
             if (!flag) {
@@ -91,7 +80,7 @@ public abstract class Function implements MathFunction {
                 s += ", " + args.get(temp);
             }
         }
-        s +=") = " + value;
+        s += ") = " + value;
         return s;
     }
 
@@ -101,28 +90,24 @@ public abstract class Function implements MathFunction {
     }
 
     @Override
+    public ArrayList<String> getFunctionTokens() {
+        return new ArrayList<>(this.functionTokens);
+    }
+
+    @Override
     public Set<String> getVarNameSet() {
-        return varNameSet;
+        return new HashSet<>(varNameSet);
     }
 
     public String tokensToString() {
         return "f(x) = " + functionTokens.toString();
     }
 
-    public void setFunction(String s) {
-        try {
-            FunctionTokenizator.functionTokenizator(s, functionTokens, varNameSet);
-        } catch (FunctionFormatException e) {
-            System.err.println(e.getMessage());
-            System.exit(1);
-        }
+    public void setFunction(String s) throws FunctionFormatException {
+        FunctionTokenizator.tokenize(s, functionTokens, varNameSet);
     }
 
     public String getName() {
         return name;
-    }
-
-    public ArrayList<String> getFunctionTokens() {
-        return functionTokens;
     }
 }

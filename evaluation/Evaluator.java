@@ -1,10 +1,20 @@
+package evaluation;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.HashMap;
+import model.*;
+import exception.*;
 
+/**
+ * Represents an evaluator of the function value Finds the value of a function
+ * at an n-dimensional point
+ *
+ * @author xromza
+ */
 public class Evaluator {
+
     private int pos = 0;
     private final ArrayList<String> functionTokens;
     private final Set<String> varNameSet;
@@ -12,6 +22,12 @@ public class Evaluator {
     public Evaluator(ArrayList<String> functionTokens, Set<String> varNameSet) {
         this.functionTokens = functionTokens;
         this.varNameSet = varNameSet;
+    }
+
+    public Evaluator(MathFunction func) {
+        this.functionTokens = func.getFunctionTokens();
+        this.varNameSet = func.getVarNameSet();
+
     }
 
     public double evaluate(double arg) throws EvaluationException {
@@ -34,7 +50,7 @@ public class Evaluator {
         return result;
     }
 
-    private double parseExpression(Map<String, Double> args) {
+    private double parseExpression(Map<String, Double> args) throws EvaluationException {
         double left = parseTerm(args);
         while (pos < functionTokens.size()) {
             String op = functionTokens.get(pos);
@@ -42,8 +58,8 @@ public class Evaluator {
                 pos++;
                 double right = parseTerm(args);
                 if ("+".equals(op)) {
-                    left += right; 
-                }else {
+                    left += right;
+                } else {
                     left -= right;
                 }
             } else {
@@ -53,7 +69,7 @@ public class Evaluator {
         return left;
     }
 
-    private double parseTerm(Map<String, Double> args) {
+    private double parseTerm(Map<String, Double> args) throws EvaluationException {
         double left = parseFactor(args);
         while (pos < functionTokens.size()) {
             String op = functionTokens.get(pos);
@@ -72,7 +88,7 @@ public class Evaluator {
         return left;
     }
 
-    private double parseFactor(Map<String, Double> args) {
+    private double parseFactor(Map<String, Double> args) throws EvaluationException {
         double left = parseUnary(args);
         if (pos < functionTokens.size() && "^".equals(functionTokens.get(pos))) {
             pos++;
@@ -82,7 +98,7 @@ public class Evaluator {
         return left;
     }
 
-    private double parseUnary(Map<String, Double> args) {
+    private double parseUnary(Map<String, Double> args) throws EvaluationException {
         if (pos < functionTokens.size() && "-".equals(functionTokens.get(pos))) {
             pos++;
             return -parseUnary(args);
@@ -91,13 +107,7 @@ public class Evaluator {
             pos++;
             return parseUnary(args);
         }
-        try {
-            return parsePrimary(args);
-        } catch (EvaluationException e) {
-            System.out.println(e.getMessage());
-            System.exit(1);
-        }
-        return 1;
+        return parsePrimary(args);
     }
 
     private double parsePrimary(Map<String, Double> args) throws EvaluationException {

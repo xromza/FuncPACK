@@ -1,12 +1,21 @@
+package parsing;
+
 import java.util.EmptyStackException;
 import java.util.ArrayList;
 import java.util.Stack;
 import java.util.Set;
+import exception.*;
 
+/**
+ * Tokenizator of math functions String parser of math functions to String
+ * ArrayList for using in other libraries
+ *
+ * @author xromza
+ */
 public class FunctionTokenizator {
 
-    public static void functionTokenizator(String functionString, ArrayList<String> functionTokens,
-                                      Set<String> varNameSet) throws FunctionFormatException {
+    public static void tokenize(String functionString, ArrayList<String> functionTokens,
+            Set<String> varNameSet) throws FunctionFormatException {
         functionString = functionString.replaceAll(" ", "");
         if (!validateBrackets(functionString)) {
             throw new FunctionFormatException("неправильная расстановка скобок");
@@ -20,7 +29,7 @@ public class FunctionTokenizator {
                 int j = 1;
                 for (; j < functionString.length() - i && isNumber(functionString.substring(i, i + j + 1)); j++) {
                 }
-                if (!functionTokens.isEmpty() && (isNumber(functionTokens.getLast()) || functionString.charAt(i-1) == ')')) {
+                if (!functionTokens.isEmpty() && (isNumber(functionTokens.getLast()) || functionString.charAt(i - 1) == ')')) {
                     functionTokens.add("*");
                 }
                 buffer = functionString.substring(i, i + j);
@@ -29,10 +38,10 @@ public class FunctionTokenizator {
                 functionTokens.add(buffer);
                 buffer = "";
             } else if (isVar(c)) {
-                if (!varNameSet.contains(""+c)) {
-                    varNameSet.add(""+c);
+                if (!varNameSet.contains("" + c)) {
+                    varNameSet.add("" + c);
                 }
-                if (!functionTokens.isEmpty() && (isNumber(functionTokens.getLast()) || functionString.charAt(i-1) == ')' || isVar(functionTokens.getLast()))) {
+                if (!functionTokens.isEmpty() && (isNumber(functionTokens.getLast()) || functionString.charAt(i - 1) == ')' || isVar(functionTokens.getLast()))) {
                     functionTokens.add("*");
                 }
                 buffer += c;
@@ -41,7 +50,7 @@ public class FunctionTokenizator {
                 i++;
             } else if (isOperator(c)) {
                 if (c == '^') {
-                    if (!isNumber(functionTokens.getLast()) && !isVar(functionTokens.getLast()) && functionString.charAt(i-1) != ')') {
+                    if (!isNumber(functionTokens.getLast()) && !isVar(functionTokens.getLast()) && functionString.charAt(i - 1) != ')') {
                         throw new FunctionFormatException("неожиданная \"^\"");
                     }
                 }
@@ -57,19 +66,20 @@ public class FunctionTokenizator {
                 functionTokens.add(buffer);
                 buffer = "";
                 i++;
-                
-            }
-            else {
-                i++;
+
+            } else {
+                throw new FunctionFormatException("неизвестный символ");
             }
         }
     }
+
     public static boolean validateBrackets(String s) {
         Stack<Character> stack = new Stack<>();
         for (int i = 0; i < s.length(); i++) {
             try {
                 switch (s.charAt(i)) {
-                    case '(', '[', '{' -> stack.push(s.charAt(i));
+                    case '(', '[', '{' ->
+                        stack.push(s.charAt(i));
                     case ')' -> {
                         if (stack.pop() != '(') {
                             return false;
@@ -92,29 +102,32 @@ public class FunctionTokenizator {
         }
         return stack.isEmpty();
     }
-    public static void getVarNameSet(String s, ArrayList<String> functionTokens, Set<String> varNameSet) {
-        try {
-        functionTokenizator(s, functionTokens, varNameSet);
-        } catch (FunctionFormatException e) {
-            System.err.println(e.getMessage());
-        }
+
+    public static void getVarNameSet(String s, ArrayList<String> functionTokens, Set<String> varNameSet) throws FunctionFormatException {
+        tokenize(s, functionTokens, varNameSet);
     }
+
     private static boolean isNumber(String s) {
-        return s.matches("-?\\d+(\\.\\d+)?"); 
+        return s.matches("-?\\d+(\\.\\d+)?");
     }
+
     private static boolean isNumber(char c) {
         String temp = "" + c;
         return isNumber(temp);
     }
+
     private static boolean isOperator(char c) {
         return c == '+' || c == '-' || c == '*' || c == '/' || c == '^';
     }
+
     private static boolean isBrackets(char c) {
-        return c == '(' || c == '[' || c == '{' || c == ')' || c == ']' || c == '}'; 
+        return c == '(' || c == '[' || c == '{' || c == ')' || c == ']' || c == '}';
     }
+
     private static boolean isVar(String s) {
         return isVar(s.charAt(0));
     }
+
     private static boolean isVar(char c) {
         return c >= 'a' && c <= 'z';
     }
